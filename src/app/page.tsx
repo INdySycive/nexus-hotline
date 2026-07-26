@@ -6,6 +6,16 @@ export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  let profile = null
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, display_name')
+      .eq('id', user.id)
+      .single()
+    profile = data
+  }
+
   async function signOut() {
     'use server'
     const supabase = await createClient()
@@ -24,20 +34,42 @@ export default async function Home() {
         </p>
 
         <div className="mt-10 p-6 border border-zinc-800 rounded-xl bg-zinc-900/50">
-          <p className="text-sm text-zinc-500 mb-2">Supabase Status</p>
           {user ? (
-            <div className="space-y-4">
-              <p className="text-emerald-400 font-medium">
-                Logged in as {user.email}
-              </p>
-              <form action={signOut}>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm"
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm text-zinc-500 mb-1">Logged in as</p>
+                <p className="text-emerald-400 font-medium">
+                  {profile?.display_name || user.email}
+                </p>
+                {profile?.username && (
+                  <p className="text-zinc-500 text-sm mt-1">@{profile.username}</p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-3 justify-center">
+                {profile?.username && (
+                  <Link
+                    href={`/u/${profile.username}`}
+                    className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm"
+                  >
+                    View Profile
+                  </Link>
+                )}
+                <Link
+                  href="/profile/edit"
+                  className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm"
                 >
-                  Log Out
-                </button>
-              </form>
+                  Edit Profile
+                </Link>
+                <form action={signOut}>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 border border-zinc-700 hover:bg-zinc-900 rounded-lg text-sm"
+                  >
+                    Log Out
+                  </button>
+                </form>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
